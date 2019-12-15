@@ -4,7 +4,7 @@
 
 #include "pipe.h"
 
-struct Boundary {
+struct State {
     int cs;
     std::vector<char> header;
     std::vector<char> image;
@@ -36,7 +36,7 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
 
 
 %%{
-    machine boundary;
+    machine borescope;
     access fsm->;
 
     action done_begin {
@@ -152,11 +152,11 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
 
 %% write data;
 
-void boundary_init(Boundary *fsm) {
+void boundary_init(State *fsm) {
     %% write init;
 }
 
-void boundary_execute(Boundary *fsm, char c) {
+void boundary_execute(State *fsm, char c) {
     const char *p = &c;
     const char *pe = p + 1;
 
@@ -166,7 +166,7 @@ void boundary_execute(Boundary *fsm, char c) {
 
 int main(int argc, char **argv)
 {
-    Boundary fsm;
+    State fsm;
 
     for (int i=1; i<argc; i++) {
         if (std::string(argv[i]) == "--jpeg") {
