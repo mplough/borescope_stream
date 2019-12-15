@@ -11,6 +11,7 @@ struct Boundary {
     bool output_jpeg = false;
     bool rewrite_jpeg = false;
     bool write_files = false;
+    bool skip_corrupt = false;
     size_t image_size = 0;
     uint32_t frame_number = 0;
     int n = 0;
@@ -54,17 +55,40 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
         fprintf(stderr, "%08zx ", fsm->image_size);
         fprintf(stderr, "%08lx ", fsm->image.size());
         fprintf(stderr, "%8d ", fsm->frame_number);
-        fprintf(stderr, "%8d \n", fsm->n);
+        fprintf(stderr, "%8d ", fsm->n);
         if (fsm->output_jpeg) {
             if (fsm->rewrite_jpeg) {
                 Process p("jpegtran");
-                fwrite(fsm->image.data(), fsm->image.size(), 1, p.child_stdin());
-                p.wait();
-                char buf[1024];
+                fwrite(fsm->image.data(), 1, fsm->image.size(), p.child_stdin());
+                fclose(p.child_stdin());
+                std::string processed_image;
                 while (true) {
+                    char buf[1024];
                     auto len = fread(buf, 1, 1024, p.child_stdout());
-                    fwrite(buf, len, 1, stdout);
+                    processed_image += std::string(buf, len);
                     if (len != 1024) break;
+                }
+
+                std::string jpegtran_error;
+                while (true) {
+                    char buf[1024];
+                    auto len = fread(buf, 1, 1024, p.child_stderr());
+                    jpegtran_error += std::string(buf, len);
+                    if (len != 1024) break;
+                    fprintf(stderr, "%s\n", jpegtran_error.c_str());
+                }
+
+                p.wait();
+
+                bool corrupt = false;
+                if (jpegtran_error.find("Corrupt JPEG data") == 0) {
+                    fprintf(stderr, "CORRUPT ");
+                    corrupt = true;
+                }
+
+                if ((!fsm->skip_corrupt) || (fsm->skip_corrupt && !corrupt)) {
+                    fprintf(stderr, "writing ");
+                    fwrite(processed_image.data(), processed_image.size(), 1, stdout);
                 }
             }
             else {
@@ -72,6 +96,7 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
                 fwrite(fsm->image.data(), fsm->image.size(), 1, stdout);
             }
         }
+
         if (fsm->write_files) {
             char name_buf[50];
             sprintf(name_buf, "frame_%06d.log", fsm->n);
@@ -79,6 +104,9 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
             fwrite(fsm->image.data(), fsm->image.size(), 1, fp);
             fclose(fp);
         }
+
+        fprintf(stderr, "\n");
+
     }
 
     action byte_header {
@@ -119,7 +147,6 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
     ) $byte_header @done_header;
     jpeg = (any* -- end) $byte_jpeg;
 
-
     main := (begin header jpeg end)*;
 }%%
 
@@ -145,12 +172,19 @@ int main(int argc, char **argv)
         if (std::string(argv[i]) == "--jpeg") {
             fsm.output_jpeg = true;
         }
-        if (std::string(argv[i]) == "--rewrite-jpeg") {
+        else if (std::string(argv[i]) == "--rewrite-jpeg") {
             fsm.output_jpeg = true;
             fsm.rewrite_jpeg = true;
         }
-        if (std::string(argv[i]) == "--write-files") {
+        else if (std::string(argv[i]) == "--write-files") {
             fsm.write_files = true;
+        }
+        else if (std::string(argv[i]) == "--skip-corrupt-frames") {
+            fsm.skip_corrupt = true;
+        }
+        else {
+            printf("The option '%s' is not valid\n", argv[i]);
+            return 1;
         }
     }
 

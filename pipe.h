@@ -8,7 +8,7 @@ class Process {
         Process(const std::string &filename);
         ~Process();
 
-        int wait();
+        void wait();
 
         FILE *child_stdin() const {return m_child_stdin;}
         FILE *child_stdout() const {return m_child_stdout;}

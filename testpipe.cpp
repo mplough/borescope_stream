@@ -10,10 +10,19 @@ int main(int argc, char **argv)
         printf("%d\n", i);
         fprintf(p.child_stdin(), "line 1\n");
         fprintf(p.child_stdin(), "line 2\n");
-        p.wait();
+        fclose(p.child_stdin());
 
         char buf[1024];
-        fread(buf, 1024, 1, p.child_stdout());
-        printf("%s\n", buf);
+        while (true) {
+            auto len = fread(buf, 1, 1024, p.child_stdout());
+            fwrite(buf, len, 1, stdout);
+            if (len != 1024) break;
+        }
+        while (true) {
+            auto len = fread(buf, 1, 1024, p.child_stderr());
+            fwrite(buf, len, 1, stdout);
+            if (len != 1024) break;
+        }
+        p.wait();
     }
 }

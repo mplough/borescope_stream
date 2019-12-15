@@ -62,13 +62,11 @@ Process::Process(const std::string &filename)
 }
 
 Process::~Process() {
+    // Note: the caller must call fclose(m_child_stdin);
     fclose(m_child_stdout);
     fclose(m_child_stderr);
 }
 
-int Process::wait() {
-    fclose(m_child_stdin);
-    int status;
-    ::wait(&status);
-    return status;
+void Process::wait() {
+    ::wait(nullptr);
 }
