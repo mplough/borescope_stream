@@ -1,7 +1,7 @@
 # Borescope camera video stream rewriter
 
 This tool rewrites the video stream from a wi-fi borescope camera as described
-in [TODO BLOG POST].
+in my blog post [Rewriting the video stream from a wi-fi borescope camera](https://mplough.github.io/2019/12/14/borescope.html).
 
 # Dependencies
 ## Run
