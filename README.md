@@ -3,6 +3,12 @@
 This tool rewrites the video stream from a wi-fi borescope camera as described
 in my blog post [Rewriting the video stream from a wi-fi borescope camera](https://mplough.github.io/2019/12/14/borescope.html).
 
+It fixes the borescope's intentional stream corruption and produces output
+suitable for use in standard video tools such as `ffmpeg` that read MJPEG
+streams.  Credit for [identifying the method of intentional
+corruption](https://mkarr.github.io/20200616_boroscope) goes to Michael Karr et
+al.
+
 # Dependencies
 ## Run
 This tool runs on POSIX systems.  So far, macOS is tested.
@@ -38,14 +44,14 @@ your preferred tool for viewing MJPEG streams.
 mkfifo vid.fifo
 nc 192.168.10.123 7060 \
     | tee v.log \
-    | /path/to/borescope_stream --rewrite-jpeg >vid.fifo & \
+    | /path/to/borescope_stream --jpeg >vid.fifo & \
     ffplay -hide_banner -loglevel error -f mjpeg vid.fifo
 ```
 
 ## Command-line options
 - `--jpeg` - write stripped JPEG stream to stdout.
 - `--rewrite-jpeg` - rewrite each frame using `jpegtran`, then write the
-  transformed fram to stdout.
+  transformed frame to stdout.
 - `--skip-corrupt-frames` - when `--rewrite-jpeg` is active, skip writing
   frames that `jpegtran` deems corrupt.
 - `--write-files` - write stripped JPEG frames from the input stream to

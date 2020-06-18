@@ -56,6 +56,11 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
         fprintf(stderr, "%08lx ", fsm->image.size());
         fprintf(stderr, "%8d ", fsm->frame_number);
         fprintf(stderr, "%8d ", fsm->n);
+
+        // undo the borescope's intentional image corruption as described at
+        // https://mkarr.github.io/20200616_boroscope
+        fsm->image[fsm->image.size() / 2] = ~fsm->image[fsm->image.size() / 2];
+
         if (fsm->output_jpeg) {
             if (fsm->rewrite_jpeg) {
                 Process p("jpegtran");
