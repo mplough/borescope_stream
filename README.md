@@ -33,8 +33,8 @@ and image information to stderr.
 
 The following pipeline acquires video from the camera, logs the raw stream to a
 file for later playback, rewrites the stream in real time, and displays video.
-A named pipe is used because `ffplay` only reads files and not accept input on
-stdin.
+A named pipe is used because `ffplay` only reads files and does not accept input
+on stdin.
 
 Note that `ffplay` is only required if you want to watch the video with
 `ffplay`.  Feel free to not watch the video, or to use replace `ffplay` with
