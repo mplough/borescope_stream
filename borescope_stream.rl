@@ -2,16 +2,12 @@
 #include <string>
 #include <vector>
 
-#include "pipe.h"
-
 struct State {
     int cs;
     std::vector<char> header;
     std::vector<char> image;
     bool output_jpeg = false;
-    bool rewrite_jpeg = false;
     bool write_files = false;
-    bool skip_corrupt = false;
     size_t image_size = 0;
     uint32_t frame_number = 0;
     int n = 0;
@@ -62,44 +58,8 @@ This bothers me because NETWORK BYTE ORDER IS BIG ENDIAN.
         fsm->image[fsm->image.size() / 2] = ~fsm->image[fsm->image.size() / 2];
 
         if (fsm->output_jpeg) {
-            if (fsm->rewrite_jpeg) {
-                Process p("jpegtran");
-                fwrite(fsm->image.data(), 1, fsm->image.size(), p.child_stdin());
-                fclose(p.child_stdin());
-                std::string processed_image;
-                while (true) {
-                    char buf[1024];
-                    auto len = fread(buf, 1, 1024, p.child_stdout());
-                    processed_image += std::string(buf, len);
-                    if (len != 1024) break;
-                }
-
-                std::string jpegtran_error;
-                while (true) {
-                    char buf[1024];
-                    auto len = fread(buf, 1, 1024, p.child_stderr());
-                    jpegtran_error += std::string(buf, len);
-                    if (len != 1024) break;
-                    fprintf(stderr, "%s\n", jpegtran_error.c_str());
-                }
-
-                p.wait();
-
-                bool corrupt = false;
-                if (jpegtran_error.find("Corrupt JPEG data") == 0) {
-                    fprintf(stderr, "CORRUPT ");
-                    corrupt = true;
-                }
-
-                if ((!fsm->skip_corrupt) || (fsm->skip_corrupt && !corrupt)) {
-                    fprintf(stderr, "writing ");
-                    fwrite(processed_image.data(), processed_image.size(), 1, stdout);
-                }
-            }
-            else {
-                // just write jpeg data with depstech header and footer stripped
-                fwrite(fsm->image.data(), fsm->image.size(), 1, stdout);
-            }
+            // write jpeg data with depstech header and footer stripped
+            fwrite(fsm->image.data(), fsm->image.size(), 1, stdout);
         }
 
         if (fsm->write_files) {
@@ -177,15 +137,8 @@ int main(int argc, char **argv)
         if (std::string(argv[i]) == "--jpeg") {
             fsm.output_jpeg = true;
         }
-        else if (std::string(argv[i]) == "--rewrite-jpeg") {
-            fsm.output_jpeg = true;
-            fsm.rewrite_jpeg = true;
-        }
         else if (std::string(argv[i]) == "--write-files") {
             fsm.write_files = true;
-        }
-        else if (std::string(argv[i]) == "--skip-corrupt-frames") {
-            fsm.skip_corrupt = true;
         }
         else {
             printf("The option '%s' is not valid\n", argv[i]);

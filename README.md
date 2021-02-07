@@ -22,8 +22,7 @@ On macOS, install `ragel` with [Homebrew](https://brew.sh/):
 brew install ragel
 ```
 
-Build by running `make borescope_stream`, or just `make` to also build the test
-code.
+Build by running `make borescope_stream`.
 
 # Usage
 
@@ -50,9 +49,5 @@ nc 192.168.10.123 7060 \
 
 ## Command-line options
 - `--jpeg` - write stripped JPEG stream to stdout.
-- `--rewrite-jpeg` - rewrite each frame using `jpegtran`, then write the
-  transformed frame to stdout.
-- `--skip-corrupt-frames` - when `--rewrite-jpeg` is active, skip writing
-  frames that `jpegtran` deems corrupt.
 - `--write-files` - write stripped JPEG frames from the input stream to
   individually numbered files.
